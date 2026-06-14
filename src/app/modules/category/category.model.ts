@@ -14,5 +14,5 @@ const categorySchema = new Schema<ICategory>(
   },
   { timestamps: true }
 );
-
+//cv
 export const Category = model<ICategory>('Category', categorySchema);
