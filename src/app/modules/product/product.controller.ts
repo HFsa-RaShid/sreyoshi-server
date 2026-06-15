@@ -1,52 +1,73 @@
 import { Request, Response, NextFunction } from 'express';
-import { Product } from './product.model';
+import { ProductServices } from './product.service';
 
-// Create Product
+// ১. মেইন প্রোডাক্ট তৈরি করার কন্ট্রোলার (সব ইমেজ ও ডাটা একসাথে হ্যান্ডেল করবে)
 const createProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await Product.create(req.body);
-    res.status(201).json({ success: true, message: 'Product created!', data: result });
+    const productData = req.body.data ? JSON.parse(req.body.data) : req.body;
+    
+    // এক্সপ্রেস মাল্টি-ফিল্ড ফাইল রিসিভ করার টাইপ কাস্টিং
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const result = await ProductServices.createProductIntoDB(productData, files);
+
+    res.status(201).json({
+      success: true,
+      message: 'Product created successfully with all dynamic fields!',
+      data: result,
+    });
   } catch (error) { next(error); }
 };
 
-// Get All Products (ক্যাটাগরির সব ডেটাসহ Populate করা হয়েছে)
+// ২. সব প্রোডাক্ট একসাথে গেট করার কন্ট্রোলার
 const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await Product.find().populate('category');
+    const result = await ProductServices.getAllProductsFromDB();
     res.status(200).json({ success: true, data: result });
   } catch (error) { next(error); }
 };
 
-// Get Single Product By productCode
+// ৩. সিঙ্গেল প্রোডাক্ট গেট করার কন্ট্রোলার
 const getSingleProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { productCode } = req.params;
-    const result = await Product.findOne({ productCode }).populate('category');
-    if (!result) throw new Error('Product not found with this code');
+    const result = await ProductServices.getSingleProductFromDB(productCode as string);
     
+    if (!result) throw new Error('Product not found with this code!');
+
     res.status(200).json({ success: true, data: result });
   } catch (error) { next(error); }
 };
 
-// Update Product By productCode
+// ৪. প্রোডাক্ট আপডেট করার কন্ট্রোলার
 const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { productCode } = req.params;
-    const result = await Product.findOneAndUpdate({ productCode }, req.body, { new: true });
-    if (!result) throw new Error('Product not found to update');
+    const productData = req.body.data ? JSON.parse(req.body.data) : req.body;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    res.status(200).json({ success: true, message: 'Product updated!', data: result });
+    const result = await ProductServices.updateProductInDB(productCode as string, productData, files);
+    if (!result) throw new Error('Product not found to update!');
+
+    res.status(200).json({
+      success: true,
+      message: 'Product updated successfully!',
+      data: result,
+    });
   } catch (error) { next(error); }
 };
 
-// Delete Product By productCode
+// ৫. প্রোডাক্ট ডিলিট করার কন্ট্রোলার
 const deleteProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { productCode } = req.params;
-    const result = await Product.findOneAndDelete({ productCode });
-    if (!result) throw new Error('Product not found to delete');
+    const result = await ProductServices.deleteProductFromDB(productCode as string);
+    if (!result) throw new Error('Product not found to delete!');
 
-    res.status(200).json({ success: true, message: 'Product deleted successfully!' });
+    res.status(200).json({
+      success: true,
+      message: 'Product deleted successfully!',
+    });
   } catch (error) { next(error); }
 };
 
@@ -55,5 +76,5 @@ export const ProductController = {
   getAllProducts,
   getSingleProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
 };
