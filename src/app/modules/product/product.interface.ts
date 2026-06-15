@@ -1,17 +1,19 @@
-import { Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type IProductShade = {
+export interface IProductShade {
   shadeName: string;
   shadeColorCode?: string;
-  shadeImage?: string; // ব্যাকএন্ড নিজে ফাইল আপলোড করে এই URLটি বসাবে, তাই এটি ক্রিয়েশনের সময় অপশনাল রাখা হয়েছে
-  isActive: boolean;
-};
+  shadeImage: string; // প্রথম ছবি (শেড ভিত্তিক)
+  stock: number;
+  status: 'Active' | 'Inactive'; // 👈 প্রতিটি শেডের নিজস্ব ইন্ডিভিজুয়াল স্ট্যাটাস
+}
 
-export type IProduct = {
+export interface IProduct extends Document {
   productCode: string;
   name: string;
   category: Types.ObjectId;
   subCategory: string;
+  itemName: string;
   skinType?: string;
   price: number;
   oldPrice?: number;
@@ -21,8 +23,9 @@ export type IProduct = {
   salesCount: number;
   promotion?: 'Best Sellers' | 'New Arrivals' | 'Trending';
   availability: 'In Stock' | 'Out of Stock';
-  images: string[]; // মেইন ৪টি ছবি
+  status: 'Active' | 'Inactive'; // 👈 মেইন প্রোডাক্টের সম্পূর্ণ ভিজিবিলিটি স্ট্যাটাস
+  commonImages: string[]; // বাকি ৩টি ছবি
   weightOrVolume: number;
   unit: 'gm' | 'ml';
-  shades?: IProductShade[]; // মেকআপ না হলে এটি খালি বা আনডিফাইনড থাকবে
-};
+  shades?: IProductShade[];
+}

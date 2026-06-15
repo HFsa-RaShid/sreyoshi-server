@@ -1,18 +1,22 @@
 import { Schema, model } from 'mongoose';
 import { ICategory, ISubCategory } from './category.interface';
 
-const subCategorySchema = new Schema<ISubCategory>({
-  title: { type: String, required: true },
-  items: [{ type: String, required: true }]
-}, { _id: false }); // subCategories এর ভেতরে আলাদা করে id জেনারেট হবে না
+const subCategorySchema = new Schema<ISubCategory>(
+  {
+    title: { type: String, required: true, uppercase: true, trim: true },
+    items: [{ type: String, required: true, trim: true }]
+  },
+  { _id: false }
+);
 
 const categorySchema = new Schema<ICategory>(
   {
-    name: { type: String, required: true, unique: true },
-    image: { type: String, required: true },
+    name: { type: String, required: true, unique: true, trim: true },
+    image: { type: String },
+    status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }, // 👈 ডিফল্ট Active
     subCategories: [subCategorySchema]
   },
   { timestamps: true }
 );
-//cv
+
 export const Category = model<ICategory>('Category', categorySchema);
