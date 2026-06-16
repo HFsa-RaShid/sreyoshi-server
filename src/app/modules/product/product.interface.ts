@@ -5,7 +5,7 @@ export interface IProductShade {
   shadeColorCode?: string;
   shadeImage: string; // প্রথম ছবি (শেড ভিত্তিক)
   stock: number;
-  status: 'Active' | 'Inactive'; // 👈 প্রতিটি শেডের নিজস্ব ইন্ডিভিজুয়াল স্ট্যাটাস
+  status: 'Active' | 'Inactive'; // প্রতিটি শেডের ইন্ডিভিজুয়াল স্ট্যাটাস
 }
 
 export interface IProduct extends Document {
@@ -18,12 +18,15 @@ export interface IProduct extends Document {
   price: number;
   oldPrice?: number;
   discount?: string;
+  isDiscountDisabled: boolean; // 👈 অ্যাডমিন ডিসকাউন্ট অফ করে রাখলে কার্ডে শো করবে না
+  description: string;         // 👈 প্রোডাক্টের বিস্তারিত বিবরণ
+  howToUse?: string;           // 👈 কীভাবে ব্যবহার করতে হবে তার নির্দেশিকা
   rating: number;
   ratingCount: number;
   salesCount: number;
   promotion?: 'Best Sellers' | 'New Arrivals' | 'Trending';
   availability: 'In Stock' | 'Out of Stock';
-  status: 'Active' | 'Inactive'; // 👈 মেইন প্রোডাক্টের সম্পূর্ণ ভিজিবিলিটি স্ট্যাটাস
+  status: 'Active' | 'Inactive'; // মেইন প্রোডাক্টের সম্পূর্ণ ভিজিবিলিটি স্ট্যাটাস
   commonImages: string[]; // বাকি ৩টি ছবি
   weightOrVolume: number;
   unit: 'gm' | 'ml';

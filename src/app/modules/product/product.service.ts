@@ -1,7 +1,7 @@
 import { IProduct } from './product.interface';
 import { Product } from './product.model';
-import { ShadeManagement } from '../shade/shade.model';
-import { uploadToCloudinary } from '../../utils/uploadConfig';
+import { ShadeManagement } from '../shade/shade.model'; // আপনার প্রোজেক্টের সঠিক পাথ দিন
+import { uploadToCloudinary } from '../../utils/uploadConfig'; // আপনার প্রোজেক্টের সঠিক পাথ দিন
 
 const createProductIntoDB = async (
   productData: Partial<IProduct>, 
@@ -18,9 +18,8 @@ const createProductIntoDB = async (
     throw new Error('Remaining 3 common gallery images are required!');
   }
 
-  // ২. যদি প্রোডাক্টের shades ডাটা পাঠানো হয় (শুধুমাত্র তখনই শেড ভ্যালিডেশন চলবে)
+  // ২. যদি প্রোডাক্টের shades ডাটা পাঠানো হয়
   if (productData.shades && productData.shades.length > 0) {
-    
     // ট্রিপল চেক ভ্যালিডেশন
     const shadeConfig = await ShadeManagement.findOne({
       category: productData.category,
@@ -78,7 +77,7 @@ const updateProductInDB = async (
     productData.commonImages = commonUrls;
   }
 
-  // আপডেট করার সময়ও শেড ডাটা থাকলে শুধুমাত্র তখনই ভ্যালিডেশন ও ইমেজ প্রসেস হবে
+  // আপডেট করার সময়ও শেড ডাটা থাকলে ভ্যালিডেশন ও ইমেজ প্রসেস হবে
   if (productData.shades && productData.shades.length > 0) {
     const shadeConfig = await ShadeManagement.findOne({
       category: productData.category || existingProduct.category,
