@@ -9,10 +9,12 @@ const createCategoryIntoDB = async (payload: Partial<ICategory>, file?: Express.
   return await Category.create(payload);
 };
 
+// 🔹 সব ক্যাটাগরি গেট করার সময় (ডাটাবেজে যা আছে হুবহু ফ্রন্টঅ্যান্ডে যাবে, কোনো ফিল্টার হবে না)
 const getAllCategoriesFromDB = async () => {
   return await Category.find();
 };
 
+// 🔹 সিঙ্গেল ক্যাটাগরি গেট করার সময়
 const getSingleCategoryFromDB = async (id: string) => {
   return await Category.findById(id);
 };
