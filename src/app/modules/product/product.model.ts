@@ -5,7 +5,7 @@ const productShadeSchema = new Schema<IProductShade>(
   {
     shadeName: { type: String, required: true },
     shadeColorCode: { type: String },
-    shadeImage: { type: String, required: true },
+    shadeImages: { type: String, required: true },
     stock: { type: Number, required: true, default: 0 },
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
   },
@@ -34,7 +34,7 @@ const productSchema = new Schema<IProduct>(
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
     commonImages: [{ type: String, required: true }],
     weightOrVolume: { type: Number, required: true },
-    unit: { type: String, enum: ['gm', 'ml'], required: true },
+    unit: { type: String, enum: ['gm', 'ml', 'pcs'], required: true },
     shades: { type: [productShadeSchema], default: undefined }
   },
   { timestamps: true }

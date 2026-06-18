@@ -48,7 +48,7 @@ const createProductIntoDB = async (
 
         const dbShade = shadeConfig.availableShades.find(s => s.shadeName === currentShade.shadeName);
         currentShade.shadeColorCode = dbShade?.shadeColorCode;
-        currentShade.shadeImage = await uploadToCloudinary(shadeFiles[i]);
+        currentShade.shadeImages = await uploadToCloudinary(shadeFiles[i]);
       }
     } else {
       throw new Error('Shade images are mandatory for each variant!');
@@ -103,16 +103,16 @@ const updateProductInDB = async (
 
         const dbShade = shadeConfig.availableShades.find(s => s.shadeName === currentShade.shadeName);
         currentShade.shadeColorCode = dbShade?.shadeColorCode;
-        currentShade.shadeImage = await uploadToCloudinary(shadeFiles[i]);
+        currentShade.shadeImages = await uploadToCloudinary(shadeFiles[i]);
       }
     } else {
       for (const currentShade of productData.shades) {
         if (!allowedShades.includes(currentShade.shadeName)) throw new Error(`Unauthorized shade!`);
         const oldShade = existingProduct.shades?.find(s => s.shadeName === currentShade.shadeName);
         if (oldShade) {
-          currentShade.shadeImage = oldShade.shadeImage;
+          currentShade.shadeImages = oldShade.shadeImages;
           currentShade.shadeColorCode = oldShade.shadeColorCode;
-        } else if (!currentShade.shadeImage) {
+        } else if (!currentShade.shadeImages) {
           throw new Error(`New shade "${currentShade.shadeName}" requires image upload!`);
         }
       }

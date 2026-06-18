@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 export interface IProductShade {
   shadeName: string;
   shadeColorCode?: string;
-  shadeImage: string; // প্রথম ছবি (শেড ভিত্তিক)
+  shadeImages: string; // প্রথম ছবি (শেড ভিত্তিক)
   stock: number;
   status: 'Active' | 'Inactive'; // প্রতিটি শেডের ইন্ডিভিজুয়াল স্ট্যাটাস
 }
@@ -29,6 +29,6 @@ export interface IProduct extends Document {
   status: 'Active' | 'Inactive'; // মেইন প্রোডাক্টের সম্পূর্ণ ভিজিবিলিটি স্ট্যাটাস
   commonImages: string[]; // বাকি ৩টি ছবি
   weightOrVolume: number;
-  unit: 'gm' | 'ml';
+  unit: 'gm' | 'ml' | 'pcs';
   shades?: IProductShade[];
 }

@@ -14,7 +14,7 @@ const shadeManagementSchema = new Schema<IShadeManagement>(
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
     subCategory: { type: String, required: true, uppercase: true, trim: true },
     itemName: { type: String, required: true, trim: true },
-    status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }, // 👈 স্ট্যাটাস
+    status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
     availableShades: [shadeDetailsSchema]
   },
   { timestamps: true }
