@@ -3,21 +3,30 @@ import { PaymentServices } from "./payment.service";
 
 const paymentSuccess = async (req: Request, res: Response) => {
   try {
-    const { transactionId } = req.query;
+    // SSLCommerz থেকে অনেক সময় ডাটা body-তেও আসতে পারে (tran_id হিসেবে)
+    const transactionId = (req.query.transactionId || req.body.tran_id) as string;
 
-    await PaymentServices.verifyPaymentAndUpdateOrder(transactionId as string);
+    if (!transactionId) {
+      throw new Error("Transaction ID missing in success response");
+    }
 
-    // সফল হলে ক্লায়েন্ট সাইড/ফ্রন্টএন্ডের সাকসেসফুল পেজে পাঠিয়ে দেবে
+    await PaymentServices.verifyPaymentAndUpdateOrder(transactionId);
+
+    // সফল হলে ফ্রন্টএন্ডের সাকসেসফুল পেজে রিডাইরেক্ট করবে
     res.redirect(`${process.env.CLIENT_URL}/payment/success?status=success&id=${transactionId}`);
   } catch (error: any) {
-    res.redirect(`${process.env.CLIENT_URL}/payment/fail?message=${error.message}`);
+    res.redirect(`${process.env.CLIENT_URL}/payment/fail?message=${encodeURIComponent(error.message)}`);
   }
 };
 
 const paymentFail = async (req: Request, res: Response) => {
   try {
-    const { transactionId } = req.query;
-    await PaymentServices.failPaymentAndUpdateOrder(transactionId as string);
+    const transactionId = (req.query.transactionId || req.body.tran_id) as string;
+    
+    if (transactionId) {
+      // পেমেন্ট না করায় বা ফেইল হওয়ায় ডাটাবেজ থেকে অর্ডারটি সরাসরি ডিলিট করে দেওয়া হচ্ছে
+      await PaymentServices.failPaymentAndDeleteOrder(transactionId);
+    }
     
     // ব্যর্থ হলে ফ্রন্টএন্ডের ফেইল পেজে রিডাইরেক্ট করবে
     res.redirect(`${process.env.CLIENT_URL}/payment/fail?status=failed`);

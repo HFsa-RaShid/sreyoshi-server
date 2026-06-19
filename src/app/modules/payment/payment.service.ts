@@ -10,10 +10,11 @@ const initSSLCommerzPayment = async (orderData: any, transactionId: string) => {
     total_amount: orderData.totalPrice,
     currency: "BDT",
     tran_id: transactionId,
-    success_url: `${process.env.BACKEND_URL}/api/payments/success?transactionId=${transactionId}`,
-    fail_url: `${process.env.BACKEND_URL}/api/payments/fail?transactionId=${transactionId}`,
-    cancel_url: `${process.env.BACKEND_URL}/api/payments/fail?transactionId=${transactionId}`,
-    ipn_url: `${process.env.BACKEND_URL}/api/payments/ipn`,
+    // সেন্ট্রাল রাউটের প্রিফিক্স (যেমন /api) থাকলে তা মিলিয়ে ইউআরএল চেক করে নেবেন
+    success_url: `${process.env.BACKEND_URL}/payments/success?transactionId=${transactionId}`,
+    fail_url: `${process.env.BACKEND_URL}/payments/fail?transactionId=${transactionId}`,
+    cancel_url: `${process.env.BACKEND_URL}/payments/fail?transactionId=${transactionId}`,
+    ipn_url: `${process.env.BACKEND_URL}/payments/ipn`,
     shipping_method: "Courier",
     product_name: "E-commerce Products",
     product_category: "Cosmetics",
@@ -37,6 +38,7 @@ const initSSLCommerzPayment = async (orderData: any, transactionId: string) => {
   return apiResponse;
 };
 
+// 🟢 পেমেন্ট সফল হলে অর্ডারের স্ট্যাটাস 'Paid' করা
 const verifyPaymentAndUpdateOrder = async (transactionId: string) => {
   const order = await Order.findOne({ transactionId });
   if (!order) throw new Error("Order not found");
@@ -47,16 +49,13 @@ const verifyPaymentAndUpdateOrder = async (transactionId: string) => {
   return order;
 };
 
-const failPaymentAndUpdateOrder = async (transactionId: string) => {
-  return await Order.findOneAndUpdate(
-    { transactionId },
-    { paymentStatus: "Failed", orderStatus: "Cancelled" },
-    { new: true }
-  );
+// 🔴 পেমেন্ট ফেইল বা ক্যানসেল হলে ডাটাবেজ থেকে অর্ডার চিরতরে ডিলিট করা
+const failPaymentAndDeleteOrder = async (transactionId: string) => {
+  return await Order.findOneAndDelete({ transactionId });
 };
 
 export const PaymentServices = {
   initSSLCommerzPayment,
   verifyPaymentAndUpdateOrder,
-  failPaymentAndUpdateOrder,
+  failPaymentAndDeleteOrder, // আপডেট করা ফাংশন
 };
