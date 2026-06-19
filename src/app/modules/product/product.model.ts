@@ -17,6 +17,7 @@ const productSchema = new Schema<IProduct>(
     productCode: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+    brand: { type: Schema.Types.ObjectId, ref: 'Brand', required: true },
     subCategory: { type: String, required: true, uppercase: true },
     itemName: { type: String, required: true },
     skinType: { type: String },

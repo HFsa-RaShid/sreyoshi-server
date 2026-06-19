@@ -3,24 +3,25 @@ import { Document, Types } from 'mongoose';
 export interface IProductShade {
   shadeName: string;
   shadeColorCode?: string;
-  shadeImages: string; // প্রথম ছবি (শেড ভিত্তিক)
+  shadeImages: string; 
   stock: number;
-  status: 'Active' | 'Inactive'; // প্রতিটি শেডের ইন্ডিভিজুয়াল স্ট্যাটাস
+  status: 'Active' | 'Inactive'; 
 }
 
 export interface IProduct extends Document {
   productCode: string;
   name: string;
   category: Types.ObjectId;
+  brand: Types.ObjectId;
   subCategory: string;
   itemName: string;
   skinType?: string;
   price: number;
   oldPrice?: number;
   discount?: string;
-  isDiscountDisabled: boolean; // 👈 অ্যাডমিন ডিসকাউন্ট অফ করে রাখলে কার্ডে শো করবে না
-  description: string;         // 👈 প্রোডাক্টের বিস্তারিত বিবরণ
-  howToUse?: string;           // 👈 কীভাবে ব্যবহার করতে হবে তার নির্দেশিকা
+  isDiscountDisabled: boolean; 
+  description: string;         
+  howToUse?: string;           
   rating: number;
   ratingCount: number;
   salesCount: number;

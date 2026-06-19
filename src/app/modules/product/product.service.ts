@@ -123,11 +123,11 @@ const updateProductInDB = async (
 };
 
 const getAllProductsFromDB = async () => {
-  return await Product.find().populate('category');
+  return await Product.find().populate('category').populate('brand');
 };
 
 const getSingleProductFromDB = async (productCode: string) => {
-  return await Product.findOne({ productCode }).populate('category');
+  return await Product.findOne({ productCode }).populate('category').populate('brand');
 };
 
 const deleteProductFromDB = async (productCode: string) => {
