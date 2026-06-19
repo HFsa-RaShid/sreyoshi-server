@@ -1,0 +1,62 @@
+import SSLCommerzPayment from "sslcommerz-lts";
+import { Order } from "../order/order.model";
+
+const store_id = process.env.STORE_ID || "your_store_id";
+const store_passwd = process.env.STORE_PASSWD || "your_store_password";
+const is_live = process.env.NODE_ENV === "production"; 
+
+const initSSLCommerzPayment = async (orderData: any, transactionId: string) => {
+  const data = {
+    total_amount: orderData.totalPrice,
+    currency: "BDT",
+    tran_id: transactionId,
+    success_url: `${process.env.BACKEND_URL}/api/payments/success?transactionId=${transactionId}`,
+    fail_url: `${process.env.BACKEND_URL}/api/payments/fail?transactionId=${transactionId}`,
+    cancel_url: `${process.env.BACKEND_URL}/api/payments/fail?transactionId=${transactionId}`,
+    ipn_url: `${process.env.BACKEND_URL}/api/payments/ipn`,
+    shipping_method: "Courier",
+    product_name: "E-commerce Products",
+    product_category: "Cosmetics",
+    product_profile: "general",
+    cus_name: orderData.shippingAddress.name,
+    cus_email: orderData.shippingAddress.email || "customer@mail.com",
+    cus_add1: orderData.shippingAddress.address,
+    cus_city: orderData.shippingAddress.city,
+    cus_country: "Bangladesh",
+    cus_phone: orderData.shippingAddress.phone,
+    ship_name: orderData.shippingAddress.name,
+    ship_add1: orderData.shippingAddress.address,
+    ship_city: orderData.shippingAddress.city,
+    ship_state: orderData.shippingAddress.city,
+    ship_postcode: 1000,
+    ship_country: "Bangladesh",
+  };
+
+  const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+  const apiResponse = await sslcz.init(data);
+  return apiResponse;
+};
+
+const verifyPaymentAndUpdateOrder = async (transactionId: string) => {
+  const order = await Order.findOne({ transactionId });
+  if (!order) throw new Error("Order not found");
+
+  order.paymentStatus = "Paid";
+  order.orderStatus = "Processing";
+  await order.save();
+  return order;
+};
+
+const failPaymentAndUpdateOrder = async (transactionId: string) => {
+  return await Order.findOneAndUpdate(
+    { transactionId },
+    { paymentStatus: "Failed", orderStatus: "Cancelled" },
+    { new: true }
+  );
+};
+
+export const PaymentServices = {
+  initSSLCommerzPayment,
+  verifyPaymentAndUpdateOrder,
+  failPaymentAndUpdateOrder,
+};
