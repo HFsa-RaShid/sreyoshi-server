@@ -8,9 +8,12 @@ const router = express.Router();
 // Route: /api/brands
 router.post('/', upload.single('logo'), BrandControllers.createBrand);
 
+// patch রাউটেও upload মিডলওয়্যার যোগ করুন
+router.patch('/:id', upload.single('logo'), BrandControllers.updateBrand); 
+
 router.get('/', BrandControllers.getAllBrands);
 router.get('/:id', BrandControllers.getSingleBrand);
-router.patch('/:id', BrandControllers.updateBrand);
 router.delete('/:id', BrandControllers.deleteBrand);
+
 
 export const BrandRoutes = router;

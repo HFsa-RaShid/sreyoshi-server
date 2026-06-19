@@ -4,6 +4,7 @@ import config from './config';
 
 async function bootstrap() {
   try {
+    console.log(process.env.DATABASE_URL);
     await mongoose.connect(config.database_url as string);
     console.log(`🛢️ Database connected successfully!`);
 

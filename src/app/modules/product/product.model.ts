@@ -23,9 +23,9 @@ const productSchema = new Schema<IProduct>(
     price: { type: Number, required: true },
     oldPrice: { type: Number },
     discount: { type: String },
-    isDiscountDisabled: { type: Boolean, default: false }, // 👈 ডিফল্ট ফলস থাকবে
-    description: { type: String, required: true },          // 👈 রিকোয়ার্ড করা হলো
-    howToUse: { type: String },                             // 👈 অপশনাল রাখা হলো
+    isDiscountDisabled: { type: Boolean, default: false }, 
+    description: { type: String, required: true },          
+    howToUse: { type: String },                             
     rating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
     salesCount: { type: Number, default: 0 },
