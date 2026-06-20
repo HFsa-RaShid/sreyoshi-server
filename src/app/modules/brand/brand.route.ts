@@ -6,7 +6,7 @@ import { upload } from '../../utils/uploadConfig';
 const router = express.Router();
 
 // Route: /api/brands
-router.post('/', upload.single('logo'), BrandControllers.createBrand);
+router.post('/', BrandControllers.createBrand);
 
 // patch রাউটেও upload মিডলওয়্যার যোগ করুন
 router.patch('/:id', upload.single('logo'), BrandControllers.updateBrand); 
