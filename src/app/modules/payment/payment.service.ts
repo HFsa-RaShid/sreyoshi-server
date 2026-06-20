@@ -1,8 +1,8 @@
 import SSLCommerzPayment from "sslcommerz-lts";
 import { Order } from "../order/order.model";
 
-const store_id = process.env.STORE_ID || "your_store_id";
-const store_passwd = process.env.STORE_PASSWD || "your_store_password";
+const store_id = process.env.STORE_ID;
+const store_passwd = process.env.STORE_PASSWD;
 const is_live = process.env.NODE_ENV === "production"; 
 
 const initSSLCommerzPayment = async (orderData: any, transactionId: string) => {
