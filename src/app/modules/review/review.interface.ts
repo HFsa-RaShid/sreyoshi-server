@@ -1,8 +1,9 @@
 import { Types } from 'mongoose';
 
 export interface IReview {
-  user: Types.ObjectId;      // User মডেল থেকে আসবে
-  product: Types.ObjectId;   // Product মডেল থেকে আসবে
-  rating: number;            // ১ থেকে ৫ এর মধ্যে
+  user: Types.ObjectId;
+  product: Types.ObjectId;
+  rating: number;
   comment: string;
+  status: 'Active' | 'Inactive'; 
 }

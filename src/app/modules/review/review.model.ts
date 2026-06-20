@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { IReview } from './review.interface';
-import { Product } from '../product/product.model'; // আপনার প্রোডাক্ট মডেলের পাথ দিন
+import { Product } from '../product/product.model';
 
 const reviewSchema = new Schema<IReview>(
   {
@@ -8,14 +8,15 @@ const reviewSchema = new Schema<IReview>(
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
+    status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }, // 💡 Default Active
   },
   { timestamps: true }
 );
 
-// ⚡ মঙ্গুজের স্ট্যাটিক মেথড: একটি প্রোডাক্টের রেটিং এভারেজ হিসাব করার জন্য
 reviewSchema.statics.calculateAverageRating = async function (productId: string) {
+  // 💡 শুধুমাত্র Active রিভিউগুলোর রেটিং ক্যালকুলেট হবে
   const stats = await this.aggregate([
-    { $match: { product: productId } },
+    { $match: { product: productId, status: 'Active' } },
     {
       $group: {
         _id: '$product',
@@ -38,12 +39,10 @@ reviewSchema.statics.calculateAverageRating = async function (productId: string)
   }
 };
 
-// রিভিউ সেভ হওয়ার পর অটোমেটিক রেটিং আপডেট হবে
 reviewSchema.post('save', function () {
   (this.constructor as any).calculateAverageRating(this.product);
 });
 
-// রিভিউ ডিলিট বা আপডেট হওয়ার পর অটোমেটিক রেটিং আপডেট হবে
 reviewSchema.post(/^findOneAnd/, async function (doc) {
   if (doc) {
     await doc.constructor.calculateAverageRating(doc.product);

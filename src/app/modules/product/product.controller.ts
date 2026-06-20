@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProductServices } from './product.service';
+import { Product } from './product.model';
 
 const createProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -44,10 +45,48 @@ const deleteProduct = async (req: Request, res: Response, next: NextFunction) =>
   } catch (error) { next(error); }
 };
 
+// 💡 কাস্টমাইজড কার্ট ভ্যালিডেশন (শেড ওয়াইজ স্টক চেক করবে)
+const validateCartItems = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { items } = req.body; 
+    const stockResult: Record<string, number> = {};
+
+    if (!items || !Array.isArray(items)) {
+      throw new Error('Invalid items format! Array expected.');
+    }
+
+    for (const item of items) {
+      const product = await Product.findById(item.id);
+      const shadeKey = `${item.id}-${item.shadeName || 'NoShade'}`;
+      
+      if (!product) {
+        stockResult[shadeKey] = 0;
+        continue;
+      }
+
+      // 💡 যদি প্রোডাক্টের নির্দিষ্ট শেড থাকে, তবে সেই শেডের নির্দিষ্ট স্টকটাই চেক করবে
+      if (item.shadeName && item.shadeName !== 'NoShade') {
+        const shade = product.shades?.find(
+          (s) => s.shadeName.trim().toLowerCase() === item.shadeName.trim().toLowerCase() && s.status === 'Active'
+        );
+        stockResult[shadeKey] = shade && product.status === 'Active' ? shade.stock : 0;
+      } else {
+        // রেগুলার প্রোডাক্ট (যেমন নো-শেড ক্রিম/ফেসওয়াশ) হলে ডিরেক্ট মেইন টোটাল স্টক চেক করবে
+        stockResult[shadeKey] = product.status === 'Active' ? product.totalStock : 0;
+      }
+    }
+
+    res.status(200).json({ success: true, data: stockResult });
+  } catch (error) { 
+    next(error); 
+  }
+};
+
 export const ProductController = {
   createProduct,
   getAllProducts,
   getSingleProduct,
   updateProduct,
   deleteProduct,
+  validateCartItems,
 };

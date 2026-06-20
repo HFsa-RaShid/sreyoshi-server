@@ -2,13 +2,12 @@ import { Request, Response } from "express";
 import { OrderServices } from "./order.service";
 import { PaymentServices } from "../payment/payment.service";
 
-
 const createOrder = async (req: Request, res: Response) => {
   try {
     const orderData = req.body;
     const transactionId = `TXN-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     
-    // ১. প্রথমে ডাটাবেজে অর্ডার এন্ট্রি করা হচ্ছে
+    // ১. প্রথমে ডাটাবেজে স্টক চেক ও অর্ডার এন্ট্রি করার ট্রাই করা হচ্ছে (স্টক না থাকলে সার্ভিস থেকেই এরর মারবে)
     const order = await OrderServices.createOrderIntoDB({
       ...orderData,
       transactionId,
@@ -38,7 +37,7 @@ const createOrder = async (req: Request, res: Response) => {
           data: {
             order,
             paymentMethod: "SSLCommerz",
-            redirectUrl: paymentSession.GatewayPageURL, // ফ্রন্টএন্ডে এই লিংকে রিডাইরেক্ট করতে হবে
+            redirectUrl: paymentSession.GatewayPageURL,
           },
         });
       } else {
@@ -48,7 +47,8 @@ const createOrder = async (req: Request, res: Response) => {
 
     throw new Error("Invalid payment method selected");
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    // 💡 যদি সার্ভিস ফাইল থেকে ইনসাফিসিয়েন্ট স্টক এরর আসে, তবে এখানে ক্যাচ করে ক্লায়েন্টে 400/500 দেওয়া হবে
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 

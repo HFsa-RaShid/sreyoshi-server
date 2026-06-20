@@ -31,6 +31,15 @@ const updateReview = async (req: Request, res: Response, next: NextFunction) => 
   } catch (error) { next(error); }
 };
 
+const updateReviewStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'Active' or 'Inactive'
+    const result = await ReviewServices.updateReviewInDB(id as string, { status });
+    res.status(200).json({ success: true, message: `Review status updated to ${status}!`, data: result });
+  } catch (error) { next(error); }
+};
+
 const deleteReview = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -44,5 +53,6 @@ export const ReviewControllers = {
   getAllReviews,
   getProductReviews,
   updateReview,
+  updateReviewStatus,
   deleteReview,
 };

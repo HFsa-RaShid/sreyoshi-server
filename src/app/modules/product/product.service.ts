@@ -1,13 +1,13 @@
 import { IProduct } from './product.interface';
 import { Product } from './product.model';
-import { ShadeManagement } from '../shade/shade.model'; // আপনার প্রোজেক্টের সঠিক পাথ দিন
-import { uploadToCloudinary } from '../../utils/uploadConfig'; // আপনার প্রোজেক্টের সঠিক পাথ দিন
+import { ShadeManagement } from '../shade/shade.model'; 
+import { uploadToCloudinary } from '../../utils/uploadConfig'; 
 
 const createProductIntoDB = async (
   productData: Partial<IProduct>, 
   files: { [fieldname: string]: Express.Multer.File[] }
 ) => {
-  // ১. বাকি ৩টি কমন ইমেজ ক্লাউডিনারিতে আপলোড
+  // ১. মেইন গ্যালারি ইমেজ আপলোড
   if (files && files['commonImages'] && files['commonImages'].length > 0) {
     const commonUrls = [];
     for (const file of files['commonImages']) {
@@ -18,9 +18,8 @@ const createProductIntoDB = async (
     throw new Error('Remaining 3 common gallery images are required!');
   }
 
-  // ২. যদি প্রোডাক্টের shades ডাটা পাঠানো হয়
+  // ২. শেড প্রসেসিং এবং কালার কোড + ইমেজ ম্যাপিং + শেড স্টক কাউন্টিং
   if (productData.shades && productData.shades.length > 0) {
-    // ট্রিপল চেক ভ্যালিডেশন
     const shadeConfig = await ShadeManagement.findOne({
       category: productData.category,
       subCategory: productData.subCategory?.toUpperCase(),
@@ -31,32 +30,33 @@ const createProductIntoDB = async (
       throw new Error(`No active shades config found for "${productData.itemName}". Fix Admin Shades Page first!`);
     }
 
-    // শেড ইমেজ আপলোড ও কালার কোড ম্যাপিং
-    if (files && files['shadeImages'] && files['shadeImages'].length > 0) {
-      const shadeFiles = files['shadeImages'];
-      if (shadeFiles.length !== productData.shades.length) {
-        throw new Error('Uploaded shade images count must match total provided shades!');
+    const allowedShadeNames = shadeConfig.availableShades.map(s => s.shadeName.trim().toLowerCase());
+    let calculatedTotalStock = 0; 
+
+    for (const currentShade of productData.shades) {
+      const targetName = currentShade.shadeName.trim().toLowerCase();
+
+      if (!allowedShadeNames.includes(targetName)) {
+        throw new Error(`Shade "${currentShade.shadeName}" is unauthorized!`);
       }
 
-      const allowedShadeNames = shadeConfig.availableShades.map(s => s.shadeName);
-
-      for (let i = 0; i < productData.shades.length; i++) {
-        const currentShade = productData.shades[i];
-        if (!allowedShadeNames.includes(currentShade.shadeName)) {
-          throw new Error(`Shade "${currentShade.shadeName}" is unauthorized!`);
-        }
-
-        const dbShade = shadeConfig.availableShades.find(s => s.shadeName === currentShade.shadeName);
-        currentShade.shadeColorCode = dbShade?.shadeColorCode;
-        currentShade.shadeImages = await uploadToCloudinary(shadeFiles[i]);
-      }
-    } else {
-      throw new Error('Shade images are mandatory for each variant!');
+      const dbShade = shadeConfig.availableShades.find(
+        s => s.shadeName.trim().toLowerCase() === targetName
+      );
+      
+      currentShade.shadeColorCode = dbShade?.shadeColorCode || "#000000";
+      currentShade.shadeImage = dbShade?.shadeImage || ""; 
+      
+      calculatedTotalStock += Number(currentShade.stock) || 0;
     }
+    
+    productData.totalStock = calculatedTotalStock;
   } else {
-    // যদি প্রোডাক্টের কোনো শেড না থাকে (যেমন: স্কিন কেয়ার), তবে ডাটাবেজে undefined থাকবে
     productData.shades = undefined;
+    productData.totalStock = productData.totalStock || 0;
   }
+
+  productData.availability = productData.totalStock > 0 ? 'In Stock' : 'Out of Stock';
 
   return await Product.create(productData);
 };
@@ -69,6 +69,7 @@ const updateProductInDB = async (
   const existingProduct = await Product.findOne({ productCode });
   if (!existingProduct) throw new Error('Product not found!');
 
+  // ১. মেইন গ্যালারি ইমেজ আপলোড (যদি নতুন ফাইল থাকে)
   if (files && files['commonImages'] && files['commonImages'].length > 0) {
     const commonUrls = [];
     for (const file of files['commonImages']) {
@@ -77,7 +78,7 @@ const updateProductInDB = async (
     productData.commonImages = commonUrls;
   }
 
-  // আপডেট করার সময়ও শেড ডাটা থাকলে ভ্যালিডেশন ও ইমেজ প্রসেস হবে
+  // ২. ডাইনামিক শেড ভ্যালিডেশন এবং স্টক ক্যালকুলেশন
   if (productData.shades && productData.shades.length > 0) {
     const shadeConfig = await ShadeManagement.findOne({
       category: productData.category || existingProduct.category,
@@ -89,34 +90,33 @@ const updateProductInDB = async (
       throw new Error(`Configuration settings missing for this item.`);
     }
 
-    const allowedShades = shadeConfig.availableShades.map(s => s.shadeName);
+    const allowedShades = shadeConfig.availableShades.map(s => s.shadeName.trim().toLowerCase());
+    let calculatedTotalStock = 0;
 
-    if (files && files['shadeImages'] && files['shadeImages'].length > 0) {
-      const shadeFiles = files['shadeImages'];
-      if (shadeFiles.length !== productData.shades.length) {
-        throw new Error('Uploaded shade images count mismatch!');
-      }
-
-      for (let i = 0; i < productData.shades.length; i++) {
-        const currentShade = productData.shades[i];
-        if (!allowedShades.includes(currentShade.shadeName)) throw new Error(`Unauthorized shade!`);
-
-        const dbShade = shadeConfig.availableShades.find(s => s.shadeName === currentShade.shadeName);
-        currentShade.shadeColorCode = dbShade?.shadeColorCode;
-        currentShade.shadeImages = await uploadToCloudinary(shadeFiles[i]);
-      }
-    } else {
-      for (const currentShade of productData.shades) {
-        if (!allowedShades.includes(currentShade.shadeName)) throw new Error(`Unauthorized shade!`);
-        const oldShade = existingProduct.shades?.find(s => s.shadeName === currentShade.shadeName);
-        if (oldShade) {
-          currentShade.shadeImages = oldShade.shadeImages;
-          currentShade.shadeColorCode = oldShade.shadeColorCode;
-        } else if (!currentShade.shadeImages) {
-          throw new Error(`New shade "${currentShade.shadeName}" requires image upload!`);
-        }
-      }
+    for (const currentShade of productData.shades) {
+      const targetName = currentShade.shadeName.trim().toLowerCase();
+      if (!allowedShades.includes(targetName)) throw new Error(`Unauthorized shade: "${currentShade.shadeName}"!`);
+      
+      const dbShade = shadeConfig.availableShades.find(
+        s => s.shadeName.trim().toLowerCase() === targetName
+      );
+      
+      // শুধুমাত্র Shades মডিউলের মেটাডাটা ব্যাকএন্ড রেফারেন্স থেকে অটো-সিঙ্ক হচ্ছে
+      currentShade.shadeColorCode = dbShade?.shadeColorCode || "#000000";
+      currentShade.shadeImage = dbShade?.shadeImage || "";
+      
+      calculatedTotalStock += Number(currentShade.stock) || 0;
     }
+    productData.totalStock = calculatedTotalStock;
+  } else {
+    // 💡 যদি শেড না থাকে (যেমন স্কিনকেয়ার), ফ্রন্টএন্ড থেকে পাঠানো ডাইরেক্ট টোটাল স্টক সেভ হবে
+    productData.shades = undefined;
+    productData.totalStock = productData.totalStock !== undefined ? productData.totalStock : existingProduct.totalStock;
+  }
+
+  // ৩. স্টক স্ট্যাটাস আপডেট
+  if (productData.totalStock !== undefined) {
+    productData.availability = productData.totalStock > 0 ? 'In Stock' : 'Out of Stock';
   }
 
   return await Product.findOneAndUpdate({ productCode }, productData, { new: true, runValidators: true });

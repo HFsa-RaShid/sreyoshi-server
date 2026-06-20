@@ -2,9 +2,9 @@ import { Document, Types } from 'mongoose';
 
 export interface IProductShade {
   shadeName: string;
-  shadeColorCode?: string;
-  shadeImages: string; 
-  stock: number;
+  shadeColorCode: string;
+  shadeImage: string; 
+  stock: number;      
   status: 'Active' | 'Inactive'; 
 }
 
@@ -27,9 +27,12 @@ export interface IProduct extends Document {
   salesCount: number;
   promotion?: 'Best Sellers' | 'New Arrivals' | 'Trending';
   availability: 'In Stock' | 'Out of Stock';
-  status: 'Active' | 'Inactive'; // মেইন প্রোডাক্টের সম্পূর্ণ ভিজিবিলিটি স্ট্যাটাস
-  commonImages: string[]; // বাকি ৩টি ছবি
+  status: 'Active' | 'Inactive';
+  commonImages: string[]; 
   weightOrVolume: number;
   unit: 'gm' | 'ml' | 'pcs';
+  totalStock: number; // মেইন প্রোডাক্টের স্টক (ইউজার ইনপুট দিবে)
   shades?: IProductShade[];
+  createdAt?: string;
+  updatedAt?: string;
 }

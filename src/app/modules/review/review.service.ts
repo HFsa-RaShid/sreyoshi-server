@@ -11,8 +11,9 @@ const getAllReviewsFromDB = async () => {
   return result;
 };
 
+// 💡 কাস্টমার যাতে শুধু একটিভ রিভিউগুলো দেখতে পায়
 const getProductReviewsFromDB = async (productId: string) => {
-  const result = await Review.find({ product: productId }).populate('user', 'name email');
+  const result = await Review.find({ product: productId, status: 'Active' }).populate('user', 'name email');
   return result;
 };
 

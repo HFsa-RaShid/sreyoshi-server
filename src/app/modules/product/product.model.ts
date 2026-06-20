@@ -5,8 +5,8 @@ const productShadeSchema = new Schema<IProductShade>(
   {
     shadeName: { type: String, required: true },
     shadeColorCode: { type: String },
-    shadeImages: { type: String, required: true },
-    stock: { type: Number, required: true, default: 0 },
+    shadeImage: { type: String, default: "" }, // required বাদ দেওয়া হয়েছে
+    stock: { type: Number, default: 1 },       // required বাদ দিয়ে ডিফল্ট ০
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
   },
   { _id: false }
@@ -36,6 +36,7 @@ const productSchema = new Schema<IProduct>(
     commonImages: [{ type: String, required: true }],
     weightOrVolume: { type: Number, required: true },
     unit: { type: String, enum: ['gm', 'ml', 'pcs'], required: true },
+    totalStock: { type: Number, required: true, default: 0 },
     shades: { type: [productShadeSchema], default: undefined }
   },
   { timestamps: true }
