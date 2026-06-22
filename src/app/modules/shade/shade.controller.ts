@@ -3,17 +3,8 @@ import { ShadeServices } from './shade.service';
 
 const createShadeConfig = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let bodyData = req.body;
-
-    // ফ্রন্টএন্ড থেকে FormData আকারে stringified 'data' আসলে তা পার্স করা হবে
-    if (req.body.data) {
-      bodyData = JSON.parse(req.body.data);
-    }
-
-    // multer থেকে পাওয়া ফাইলগুলোর অ্যারে কাস্ট করা হলো
-    const uploadedFiles = req.files as Express.Multer.File[] | undefined;
     
-    const result = await ShadeServices.createShadeConfigIntoDB(bodyData, uploadedFiles);
+    const result = await ShadeServices.createShadeConfigIntoDB(req.body);
     
     res.status(201).json({ 
       success: true, 
@@ -27,12 +18,11 @@ const createShadeConfig = async (req: Request, res: Response, next: NextFunction
 
 const getAllShadeConfigs = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { itemName } = req.query;
+    const { itemName, subCategory } = req.query;
     const query: Record<string, any> = {};
     
-    if (itemName) {
-      query.itemName = itemName;
-    }
+    if (itemName) query.itemName = itemName;
+    if (subCategory) query.subCategory = (subCategory as string).toUpperCase();
 
     const result = await ShadeServices.getAllShadeConfigsFromDB(query);
     res.status(200).json({ success: true, data: result });
@@ -52,14 +42,7 @@ const getSingleShadeConfig = async (req: Request, res: Response, next: NextFunct
 
 const updateShadeConfig = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let bodyData = req.body;
-
-    if (req.body.data) {
-      bodyData = JSON.parse(req.body.data);
-    }
-
-    const uploadedFiles = req.files as Express.Multer.File[] | undefined;
-    const result = await ShadeServices.updateShadeConfigInDB(req.params.id as string, bodyData, uploadedFiles);
+    const result = await ShadeServices.updateShadeConfigInDB(req.params.id as string, req.body);
     
     res.status(200).json({ 
       success: true, 

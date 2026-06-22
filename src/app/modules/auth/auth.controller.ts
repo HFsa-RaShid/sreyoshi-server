@@ -1,111 +1,128 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from '../user/user.model';
 import bcryptjs from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import config from '../../../config';
+import { User } from '../user/user.model';
 
-// 📝 ১. রেজিস্টার ইউজার (Register User)
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const createTokens = (user: any) => {
+  const accessTokenOptions: SignOptions = { expiresIn: config.jwt.expires_in as any };
+  const refreshTokenOptions: SignOptions = { expiresIn: config.jwt.refresh_expires_in as any };
+
+  const accessToken = jwt.sign(
+    { _id: user._id.toString(), role: user.role },
+    config.jwt.secret as string,
+    accessTokenOptions
+  );
+
+  const refreshToken = jwt.sign(
+    { _id: user._id.toString(), role: user.role },
+    config.jwt.refresh_secret as string,
+    refreshTokenOptions
+  );
+
+  return { accessToken, refreshToken };
+};
+
+// 📝 ১. রেগুলার রেজিস্ট্রেশন
 const registerUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, phone, email, password, confirmPassword, role } = req.body;
 
-    // ইউজার ইতিমধ্যে রেজিস্টার্ড কিনা চেক করা
-    const isUserExist = await User.findOne({ email });
-    if (isUserExist) {
-      throw new Error('User already exists with this email!');
+    if (password !== confirmPassword) throw new Error('Password and Confirm Password do not match!');
+
+    const isPhoneExist = await User.findOne({ phone });
+    if (isPhoneExist) throw new Error('Phone number already registered!');
+
+    if (email) {
+      const isEmailExist = await User.findOne({ email });
+      if (isEmailExist) throw new Error('Email already registered!');
     }
 
-    // নতুন ইউজার তৈরি করা (পাসওয়ার্ড হ্যাশিং মডেলের pre-save হুক দিয়ে অটোমেটিক হবে)
-    const newUser = await User.create({
-      name,
-      email,
-      password,
-      role,
-    });
+    const newUser = await User.create({ name, phone, email, password, role });
+    const { accessToken, refreshToken } = createTokens(newUser);
 
-    // টোকেন অপশনস টাইপ সেফ করা
-    const accessTokenOptions: SignOptions = {
-      expiresIn: config.jwt.expires_in as jwt.SignOptions['expiresIn']
-    };
+    await User.findByIdAndUpdate(newUser._id, { refreshToken });
 
-    const refreshTokenOptions: SignOptions = {
-      expiresIn: config.jwt.refresh_expires_in as jwt.SignOptions['expiresIn']
-    };
-
-    // রেজিস্টার হওয়ার সাথে সাথেই টোকেন জেনারেট করা (যাতে ইউজারকে সরাসরি লগইন করানো যায়)
-    const accessToken = jwt.sign(
-      { _id: newUser._id.toString(), role: newUser.role },
-      config.jwt.secret as string,
-      accessTokenOptions
-    );
-
-    const refreshToken = jwt.sign(
-      { _id: newUser._id.toString(), role: newUser.role },
-      config.jwt.refresh_secret as string,
-      refreshTokenOptions
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully!',
-      data: newUser,
-      accessToken,
-      refreshToken,
-    });
+    res.status(201).json({ success: true, message: 'User registered successfully!', accessToken, refreshToken });
   } catch (error) {
     next(error);
   }
 };
 
-// 🔑 ২. লগইন ইউজার (Login User)
+// 🔑 ২. রেগুলার লগইন
 const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = req.body;
+    const { identity, password } = req.body;
 
-    // ইউজার এক্সিস্ট করে কিনা চেক এবং পাসওয়ার্ড সিলেক্ট করা
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({
+      $or: [{ email: identity }, { phone: identity }]
+    }).select('+password');
+
+    if (!user) throw new Error('User not found!');
+    if (!user.password) throw new Error('This account uses Google Login. Please click Sign in with Google.');
+
+    const isPasswordMatched = await bcryptjs.compare(password, user.password);
+    if (!isPasswordMatched) throw new Error('Password incorrect!');
+
+    const { accessToken, refreshToken } = createTokens(user);
+
+    await User.findByIdAndUpdate(user._id, { refreshToken });
+
+    res.status(200).json({ success: true, message: 'Logged in successfully!', accessToken, refreshToken });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// social login
+const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      throw new Error('Google ID Token is required!');
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID, 
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload) {
+      throw new Error('Google authentication failed! Invalid token.');
+    }
+
+    const { name, email } = payload; 
+    let user = await User.findOne({ email });
+
     if (!user) {
-      throw new Error('User does not exist!');
+      user = await User.create({
+        name: name || 'Google User',
+        email,
+        phone: `google-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        isSocialLogin: true,
+        role: 'user'
+      });
     }
 
-    // পাসওয়ার্ড ম্যাচ করা
-    const isPasswordMatched = await bcryptjs.compare(password, user.password!);
-    if (!isPasswordMatched) {
-      throw new Error('Password incorrect!');
-    }
+    const { accessToken, refreshToken } = createTokens(user);
 
-    const accessTokenOptions: SignOptions = {
-      expiresIn: config.jwt.expires_in as jwt.SignOptions['expiresIn']
-    };
+   
+    await User.findByIdAndUpdate(user._id, { refreshToken });
 
-    const refreshTokenOptions: SignOptions = {
-      expiresIn: config.jwt.refresh_expires_in as jwt.SignOptions['expiresIn']
-    };
-
-    const accessToken = jwt.sign(
-      { _id: user._id.toString(), role: user.role },
-      config.jwt.secret as string,
-      accessTokenOptions
-    );
-
-    const refreshToken = jwt.sign(
-      { _id: user._id.toString(), role: user.role },
-      config.jwt.refresh_secret as string,
-      refreshTokenOptions
-    );
-
-    res.status(200).json({
-      success: true,
-      message: 'User logged in successfully!',
-      accessToken,
-      refreshToken,
+    res.status(200).json({ 
+      success: true, 
+      message: 'Google login successful!', 
+      accessToken, 
+      refreshToken 
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const AuthController = {
-  registerUser,
-  loginUser,
-};
+export const AuthController = { registerUser, loginUser, googleLogin };

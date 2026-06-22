@@ -1,14 +1,11 @@
 import { Schema, model } from 'mongoose';
-import { IShadeManagement, IShadeDetails } from './shade.interface';
+import { IShadeManagement, IShadeDetails, ShadeManagementModel } from './shade.interface';
 
-// 💡 চাইল্ড স্কিমা আপডেট করা হলো
 const shadeDetailsSchema = new Schema<IShadeDetails>(
   {
     shadeName: { type: String, required: true, trim: true },
     shadeColorCode: { type: String, required: true, trim: true },
-    shadeImage: { type: String, required: true }, // 💡 Base64 বা ইমেজ লিংক স্টোর করার জন্য
-    stock: { type: Number, required: true, default: 0 }, // 💡 ডিফল্ট স্টক ০ থাকবে
-    status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' } // 💡 ডিফল্ট একটিভ থাকবে
+    status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
   },
   { _id: false }
 );
@@ -24,6 +21,7 @@ const shadeManagementSchema = new Schema<IShadeManagement>(
   { timestamps: true }
 );
 
+
 shadeManagementSchema.index({ category: 1, subCategory: 1, itemName: 1 }, { unique: true });
 
-export const ShadeManagement = model<IShadeManagement>('ShadeManagement', shadeManagementSchema);
+export const ShadeManagement = model<IShadeManagement, ShadeManagementModel>('ShadeManagement', shadeManagementSchema);

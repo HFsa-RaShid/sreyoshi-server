@@ -3,30 +3,52 @@ import { IUser, UserModel } from './user.interface';
 import bcryptjs from 'bcryptjs';
 import config from '../../../config';
 
+// Preferences সাব-স্কিমা
+const userPreferencesSchema = new Schema({
+  language: { type: String, default: 'English' },
+  orderNotifications: { type: Boolean, default: true },
+  promotionalAlerts: { type: Boolean, default: false },
+  smsAlerts: { type: Boolean, default: true },
+  marketingEmails: { type: Boolean, default: false }
+}, { _id: false });
+
+// Active Sessions সাব-স্কিমা
+const activeSessionSchema = new Schema({
+  device: { type: String, required: true },
+  location: { type: String, required: true },
+  lastActive: { type: Date, default: Date.now }
+});
+
 const userSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true, select: 0 }, 
+    phone: { type: String, required: true, unique: true }, 
+    email: { type: String, sparse: true, unique: true },
+    password: { type: String, select: 0 }, 
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    profileImage: { type: String, default: '' },
+    isSocialLogin: { type: Boolean, default: false },
+    refreshToken: { type: String, select: 0 },
+    preferences: { type: userPreferencesSchema, default: {} },
+    activeSessions: [activeSessionSchema]
   },
   {
     timestamps: true,
     toJSON: {
       transform(doc, ret) {
         delete ret.password; 
+        delete ret.refreshToken; 
         return ret;
       },
     },
   }
 );
 
-// ✨ ফিক্সড মিডলওয়্যার: async ফাংশন হওয়ায় এখানে 'next' ছাড়াই সুন্দর কাজ করবে
 userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+  if (!this.isModified('password') || !this.password) return;
   
   this.password = await bcryptjs.hash(
-    this.password!,
+    this.password,
     Number(config.bcrypt_salt_rounds)
   );
 });

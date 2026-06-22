@@ -1,17 +1,17 @@
-import { Document, Types } from 'mongoose';
+import { Document, Types, Model } from 'mongoose';
 
 export interface IShadeDetails {
   shadeName: string;
   shadeColorCode: string;
-  shadeImage: string; // 💡 নতুন যোগ করা হলো (ডিভাইস থেকে আসা Base64 বা URL)
-  stock: number;      // 💡 প্রতিটি শেডের নিজস্ব লাইভ স্টক কাউন্ট
-  status: 'Active' | 'Inactive'; // 💡 নির্দিষ্ট শেডটি একটিভ নাকি ইনএকটিভ
+  status: 'Active' | 'Inactive'; 
 }
 
 export interface IShadeManagement extends Document {
   category: Types.ObjectId;
   subCategory: string;
   itemName: string;
-  status: 'Active' | 'Inactive'; // মেইন কনফিগুরেশনের গ্লোবাল স্ট্যাটাস
+  status: 'Active' | 'Inactive'; 
   availableShades: IShadeDetails[];
 }
+
+export type ShadeManagementModel = Model<IShadeManagement, Record<string, unknown>>;

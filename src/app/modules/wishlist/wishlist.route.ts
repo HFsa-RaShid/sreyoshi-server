@@ -1,0 +1,15 @@
+import express from 'express';
+import { WishlistControllers } from './wishlist.controller';
+
+const router = express.Router();
+
+// প্রোডাক্ট উইশলিস্টে যোগ/বিয়োগ করার জন্য (ইউআই-এর হার্ট বা ডিলিট বাটনের জন্য)
+router.post('/toggle', WishlistControllers.toggleWishlist);
+
+// নির্দিষ্ট ইউজারের উইশলিস্ট ডাটা ফ্রন্টএন্ডে রেন্ডার করার জন্য
+router.get('/:userId', WishlistControllers.getMyWishlist);
+
+// পুরো উইশলিস্ট এক ক্লিকে খালি করার জন্য
+router.delete('/clear/:userId', WishlistControllers.clearWishlist);
+
+export const WishlistRoutes = router;
