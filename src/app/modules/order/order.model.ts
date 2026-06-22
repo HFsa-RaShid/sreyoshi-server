@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { IOrder } from "./order.interface";
+import { IOrder, OrderModel } from "./order.interface";
 
 const orderSchema = new Schema<IOrder>(
   {
@@ -35,8 +35,9 @@ const orderSchema = new Schema<IOrder>(
       default: "Pending",
     },
     transactionId: { type: String, required: true, unique: true },
+    additionalNotes: { type: String }, // 💡 স্কিমাতে নোট ফিল্ড ম্যাপ করা হলো
   },
   { timestamps: true }
 );
 
-export const Order = model<IOrder>("Order", orderSchema);
+export const Order = model<IOrder, OrderModel>("Order", orderSchema);

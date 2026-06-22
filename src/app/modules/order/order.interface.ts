@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types, Model } from "mongoose";
 
 export interface IOrderProduct {
   product: Types.ObjectId;
@@ -22,4 +22,7 @@ export interface IOrder {
   paymentStatus: "Pending" | "Paid" | "Failed";
   orderStatus: "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
   transactionId: string;
+  additionalNotes?: string; 
 }
+
+export type OrderModel = Model<IOrder, Record<string, unknown>>;
