@@ -15,10 +15,10 @@ const createProductIntoDB = async (
     }
     productData.commonImages = commonUrls;
   } else {
-    throw new Error('Remaining 3 common gallery images are required!');
+    throw new Error('Remaining common gallery images are required!');
   }
 
-  // ২. শেড প্রসেসিং এবং কালার কোড + ইমেজ ম্যাপিং + শেড স্টক কাউন্টিং
+  // ২. শেড় প্রসেসিং ও ইমেজ ক্লাউডিনারি আপলোড লজিক
   if (productData.shades && productData.shades.length > 0) {
     const shadeConfig = await ShadeManagement.findOne({
       category: productData.category,
@@ -27,11 +27,14 @@ const createProductIntoDB = async (
     });
 
     if (!shadeConfig || !shadeConfig.availableShades || shadeConfig.availableShades.length === 0) {
-      throw new Error(`No active shades config found for "${productData.itemName}". Fix Admin Shades Page first!`);
+      throw new Error(`No active shades config found for "${productData.itemName}".`);
     }
 
     const allowedShadeNames = shadeConfig.availableShades.map(s => s.shadeName.trim().toLowerCase());
     let calculatedTotalStock = 0; 
+    
+    const uploadedShadeFiles = files?.['shadeImages'] || [];
+    let fileIndex = 0;
 
     for (const currentShade of productData.shades) {
       const targetName = currentShade.shadeName.trim().toLowerCase();
@@ -42,10 +45,17 @@ const createProductIntoDB = async (
 
       const dbShade = shadeConfig.availableShades.find(
         s => s.shadeName.trim().toLowerCase() === targetName
-      );
+      ) as any; // 💡 ফিক্স: 'as any' টাইপ কাস্টিং করা হলো যেন 'shadeImage' প্রপার্টি এরর না দেয়
       
       currentShade.shadeColorCode = dbShade?.shadeColorCode || "#000000";
-      currentShade.shadeImage = dbShade?.shadeImage || ""; 
+      
+      if (!currentShade.shadeImage && fileIndex < uploadedShadeFiles.length) {
+        currentShade.shadeImage = await uploadToCloudinary(uploadedShadeFiles[fileIndex]);
+        fileIndex++;
+      } else if (!currentShade.shadeImage) {
+        // 💡 ফিক্স: গ্লোবাল স্কিমায় যদি 'image' নামে থাকে তবে সেটা চেক করবে, নাহলে 'shadeImage'
+        currentShade.shadeImage = dbShade?.shadeImage || dbShade?.image || "";
+      }
       
       calculatedTotalStock += Number(currentShade.stock) || 0;
     }
@@ -57,7 +67,6 @@ const createProductIntoDB = async (
   }
 
   productData.availability = productData.totalStock > 0 ? 'In Stock' : 'Out of Stock';
-
   return await Product.create(productData);
 };
 
@@ -78,7 +87,7 @@ const updateProductInDB = async (
     productData.commonImages = commonUrls;
   }
 
-  // ২. ডাইনামিক শেড ভ্যালিডেশন এবং স্টক ক্যালকুলেশন
+  // ২. ডাইনামিক শেড ভ্যালিডেশন, ফাইল আপলোড এবং স্টক ক্যালকুলেশন
   if (productData.shades && productData.shades.length > 0) {
     const shadeConfig = await ShadeManagement.findOne({
       category: productData.category || existingProduct.category,
@@ -93,23 +102,31 @@ const updateProductInDB = async (
     const allowedShades = shadeConfig.availableShades.map(s => s.shadeName.trim().toLowerCase());
     let calculatedTotalStock = 0;
 
+    const uploadedShadeFiles = files?.['shadeImages'] || [];
+    let fileIndex = 0;
+
     for (const currentShade of productData.shades) {
       const targetName = currentShade.shadeName.trim().toLowerCase();
       if (!allowedShades.includes(targetName)) throw new Error(`Unauthorized shade: "${currentShade.shadeName}"!`);
       
       const dbShade = shadeConfig.availableShades.find(
         s => s.shadeName.trim().toLowerCase() === targetName
-      );
+      ) as any; // 💡 ফিক্স: 'as any' টাইপ কাস্টিং করা হলো
       
-      // শুধুমাত্র Shades মডিউলের মেটাডাটা ব্যাকএন্ড রেফারেন্স থেকে অটো-সিঙ্ক হচ্ছে
       currentShade.shadeColorCode = dbShade?.shadeColorCode || "#000000";
-      currentShade.shadeImage = dbShade?.shadeImage || "";
+      
+      if (uploadedShadeFiles.length > 0 && fileIndex < uploadedShadeFiles.length && (!currentShade.shadeImage || currentShade.shadeImage.startsWith('blob:') || currentShade.shadeImage === '')) {
+         currentShade.shadeImage = await uploadToCloudinary(uploadedShadeFiles[fileIndex]);
+         fileIndex++;
+      } else if (!currentShade.shadeImage) {
+         // 💡 ফিক্স: গ্লোবাল স্কিমায় যদি 'image' নামে থাকে তবে সেটা চেক করবে, নাহলে 'shadeImage'
+         currentShade.shadeImage = dbShade?.shadeImage || dbShade?.image || "";
+      }
       
       calculatedTotalStock += Number(currentShade.stock) || 0;
     }
     productData.totalStock = calculatedTotalStock;
   } else {
-    // 💡 যদি শেড না থাকে (যেমন স্কিনকেয়ার), ফ্রন্টএন্ড থেকে পাঠানো ডাইরেক্ট টোটাল স্টক সেভ হবে
     productData.shades = undefined;
     productData.totalStock = productData.totalStock !== undefined ? productData.totalStock : existingProduct.totalStock;
   }
