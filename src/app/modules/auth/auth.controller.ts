@@ -26,7 +26,7 @@ const createTokens = (user: any) => {
   return { accessToken, refreshToken };
 };
 
-// 📝 ১. রেগুলার রেজিস্ট্রেশন
+
 const registerUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, phone, email, password, confirmPassword, role } = req.body;

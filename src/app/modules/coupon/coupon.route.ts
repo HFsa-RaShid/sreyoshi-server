@@ -9,7 +9,7 @@ router.get('/available-coupons', CouponControllers.getActiveCoupons);
 
 
 router.post('/create-coupon', auth('admin'), CouponControllers.createCoupon);
-router.get('/all-coupons', auth('admin'), CouponControllers.getAllCoupons);
+router.get('/all-coupons', CouponControllers.getAllCoupons);
 router.patch('/update-coupon/:id', auth('admin'), CouponControllers.updateCoupon);
 router.delete('/delete-coupon/:id', auth('admin'), CouponControllers.deleteCoupon);
 
