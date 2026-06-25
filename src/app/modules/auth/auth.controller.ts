@@ -46,7 +46,7 @@ const registerUser = async (req: Request, res: Response, next: NextFunction) => 
 
     await User.findByIdAndUpdate(newUser._id, { refreshToken });
 
-    res.status(201).json({ success: true, message: 'User registered successfully!', accessToken, refreshToken });
+    res.status(201).json({ success: true, message: 'User registered successfully!',name,email, accessToken, refreshToken });
   } catch (error) {
     next(error);
   }
@@ -71,7 +71,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
 
     await User.findByIdAndUpdate(user._id, { refreshToken });
 
-    res.status(200).json({ success: true, message: 'Logged in successfully!', accessToken, refreshToken });
+    res.status(200).json({ success: true, message: 'Logged in successfully!', identity, accessToken, refreshToken });
   } catch (error) {
     next(error);
   }

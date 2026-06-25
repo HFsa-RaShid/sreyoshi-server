@@ -3,7 +3,6 @@ import { IUser, UserModel } from './user.interface';
 import bcryptjs from 'bcryptjs';
 import config from '../../../config';
 
-// Preferences সাব-স্কিমা
 const userPreferencesSchema = new Schema({
   language: { type: String, default: 'English' },
   orderNotifications: { type: Boolean, default: true },
@@ -12,7 +11,6 @@ const userPreferencesSchema = new Schema({
   marketingEmails: { type: Boolean, default: false }
 }, { _id: false });
 
-// Active Sessions সাব-স্কিমা
 const activeSessionSchema = new Schema({
   device: { type: String, required: true },
   location: { type: String, required: true },
@@ -26,6 +24,7 @@ const userSchema = new Schema<IUser>(
     email: { type: String, sparse: true, unique: true },
     password: { type: String, select: 0 }, 
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    status: { type: String, enum: ['active', 'blocked'], default: 'active' }, // 🎯 নতুন ফিল্ড
     profileImage: { type: String, default: '' },
     isSocialLogin: { type: Boolean, default: false },
     refreshToken: { type: String, select: 0 },
@@ -46,11 +45,7 @@ const userSchema = new Schema<IUser>(
 
 userSchema.pre('save', async function () {
   if (!this.isModified('password') || !this.password) return;
-  
-  this.password = await bcryptjs.hash(
-    this.password,
-    Number(config.bcrypt_salt_rounds)
-  );
+  this.password = await bcryptjs.hash(this.password, Number(config.bcrypt_salt_rounds));
 });
 
 export const User = model<IUser, UserModel>('User', userSchema);

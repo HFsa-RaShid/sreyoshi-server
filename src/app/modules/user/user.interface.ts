@@ -21,11 +21,12 @@ export type IUser = {
   email?: string; 
   password?: string; 
   role: 'user' | 'admin';
-  profileImage?: string; // ইমেজের Change Photo এর জন্য
+  status: 'active' | 'blocked'; 
+  profileImage?: string; 
   isSocialLogin?: boolean;
   refreshToken?: string; 
-  preferences: IUserPreferences; // 👈 UI Preferences
-  activeSessions: IActiveSession[]; // 👈 UI Privacy & Security
+  preferences: IUserPreferences; 
+  activeSessions: IActiveSession[]; 
 };
 
 export type UserModel = Model<IUser, Record<string, unknown>>;
