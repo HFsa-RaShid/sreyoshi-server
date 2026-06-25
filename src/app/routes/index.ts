@@ -12,6 +12,7 @@ import { FaqRoutes } from "../modules/faq/faq.route";
 import { WishlistRoutes } from "../modules/wishlist/wishlist.route";
 import { CouponRoutes } from "../modules/coupon/coupon.route";
 import { DeliveryChargeRoutes } from "../modules/deliveryCharge/deliveryCharge.route";
+import { ShopSettingsRoutes } from "../modules/shopSettings/shopSettings.route";
 
 
 const router = express.Router();
@@ -68,6 +69,10 @@ const moduleRoutes = [
     path: "/delivery-charge",
     route: DeliveryChargeRoutes,
   },
+   {
+    path: "/shop-settings",
+    route: ShopSettingsRoutes,
+  }
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
