@@ -7,6 +7,7 @@ const createOrder = async (req: Request, res: Response) => {
     const orderData = req.body;
     const transactionId = `TXN-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     
+    // সার্ভিস লেয়ার থেকে ডেলিভারি চার্জসহ ফাইনাল অর্ডার অবজেক্ট জেনারেট হচ্ছে
     const order = await OrderServices.createOrderIntoDB({
       ...orderData,
       transactionId,
@@ -21,7 +22,13 @@ const createOrder = async (req: Request, res: Response) => {
     }
 
     if (orderData.paymentMethod === "SSLCommerz") {
-      const paymentSession = await PaymentServices.initSSLCommerzPayment(orderData, transactionId);
+      // 🎯 SSLCommerz-এ পাঠানোর সময় ডেলিভারি চার্জসহ আপডেট হওয়া ফাইনাল totalPrice পাঠানো হলো
+      const sslPayload = {
+        ...orderData,
+        totalPrice: order.totalPrice, 
+      };
+
+      const paymentSession = await PaymentServices.initSSLCommerzPayment(sslPayload, transactionId);
       
       if (paymentSession?.GatewayPageURL) {
         return res.status(200).json({

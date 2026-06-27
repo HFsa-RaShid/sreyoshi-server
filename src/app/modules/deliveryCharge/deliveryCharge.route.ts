@@ -1,13 +1,13 @@
 import express from 'express';
 import { DeliveryChargeController } from './deliveryCharge.controller';
-import auth from '../../../middlewares/auth'; // আপনার প্রোজেক্টের Auth মিডলওয়্যার
+import auth from '../../../middlewares/auth'; 
 
 const router = express.Router();
 
-// ইউজার এন্ডপয়েন্ট (চেকআউট পেজে ব্যবহারের জন্য পাবলিক/ইউজার)
+// চেকআউট পেজের জন্য পাবলিক গেট রিকোয়েস্ট
 router.get('/calculate', DeliveryChargeController.getCalculateCharge);
 
-// অ্যাডমিন ম্যানেজমেন্ট এন্ডপয়েন্ট
+// অ্যাডমিন ম্যানেজমেন্ট এন্ডপয়েন্ট
 router.post('/create', auth('admin'), DeliveryChargeController.createZone);
 router.get('/all-zones', DeliveryChargeController.getAllZones);
 router.patch('/update/:id', auth('admin'), DeliveryChargeController.updateZone);

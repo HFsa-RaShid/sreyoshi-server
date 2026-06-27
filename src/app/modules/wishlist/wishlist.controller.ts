@@ -50,8 +50,30 @@ const clearWishlist = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
+const removeSingleItem = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { productId } = req.body;
+    const userId = req.user?._id || req.body.userId; 
+
+    if (!productId) {
+      return res.status(400).json({ success: false, message: 'Product ID is required!' });
+    }
+
+    const result = await WishlistServices.removeSingleItemFromWishlistInDB(userId, productId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Product removed from wishlist successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const WishlistControllers = {
   toggleWishlist,
   getMyWishlist,
   clearWishlist,
+  removeSingleItem,
 };

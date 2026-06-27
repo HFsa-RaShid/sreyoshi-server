@@ -10,9 +10,6 @@ const getAllZones = async () => {
 };
 
 const updateZone = async (id: string, payload: Partial<IDeliveryCharge>) => {
-  if (payload.cities) {
-    payload.cities = payload.cities.map((c) => c.toLowerCase().trim());
-  }
   return await DeliveryCharge.findByIdAndUpdate(id, { $set: payload }, { new: true });
 };
 
@@ -20,27 +17,25 @@ const deleteZone = async (id: string) => {
   return await DeliveryCharge.findByIdAndDelete(id);
 };
 
-// 🎯 চেকআউট পেজের জন্য ক্যালকুলেশন লজিক
+// 🎯 ফিক্সড ক্যালকুলেশন লজিক: সিটি যদি 'dhaka' হয় তবে inside, অন্য সব ক্ষেত্রে outside
 const calculateChargeForCity = async (userCity: string) => {
   const normalizedCity = userCity.toLowerCase().trim();
+  
+  // ইউজার সিটি ঢাকা হলে 'inside' জোন খুঁজবে, না হলে 'outside' জোন খুঁজবে
+  const targetZoneType = normalizedCity === 'dhaka' ? 'inside' : 'outside';
 
-  // ১. প্রথমে চেক করব স্পেসিফিক কোনো সিটির ভেতর এই সিটি অ্যাসাইন করা আছে কি না
   let deliveryZone = await DeliveryCharge.findOne({
+    zoneType: targetZoneType,
     isActive: true,
-    cities: normalizedCity,
   });
 
-  // ২. যদি স্পেসিফিক ম্যাচ না পায়, তবে টাইপ অনুযায়ী জোন খুঁজবে
+  // ডাটাবেজে জোন কনফিগার করা না থাকলে সেফটি ফলব্যাক চার্জ
   if (!deliveryZone) {
-    deliveryZone = await DeliveryCharge.findOne({
-      isActive: true,
-      zoneType: 'outside',
-    });
-  }
-
-  // ৩. যদি তাও না পায় (ব্যাকআপ হিসেবে ফালব্যাক চার্জ)
-  if (!deliveryZone) {
-    return { charge: 120, zoneName: 'Standard Delivery' }; // Fallback charge
+    const fallbackCharge = targetZoneType === 'inside' ? 60 : 120;
+    return { 
+      charge: fallbackCharge, 
+      zoneName: targetZoneType === 'inside' ? 'Inside Dhaka (Fallback)' : 'Outside Dhaka (Fallback)' 
+    };
   }
 
   return {

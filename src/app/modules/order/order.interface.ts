@@ -14,10 +14,11 @@ export interface IOrder {
     name: string;
     phone: string;
     address: string;
-    city: string;
+    city: string; // e.g., "dhaka", "barishal"
     email?: string;
   };
-  totalPrice: number;
+  deliveryCharge: number; // 🎯 নতুন ফিল্ড: অর্ডারে কত চার্জ ধরা হয়েছে তার ট্র্যাক রাখতে
+  totalPrice: number;    // প্রোডাক্ট প্রাইস + ডেলিভারি চার্জ মিলে গ্র্যান্ড টোটাল
   paymentMethod: "COD" | "SSLCommerz";
   paymentStatus: "Pending" | "Paid" | "Failed";
   orderStatus: "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";

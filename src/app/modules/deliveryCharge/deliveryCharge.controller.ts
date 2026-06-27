@@ -4,7 +4,7 @@ import { DeliveryChargeService } from './deliveryCharge.service';
 const createZone = async (req: Request, res: Response) => {
   try {
     const result = await DeliveryChargeService.createZone(req.body);
-    res.status(201).json({ success: true, message: 'Delivery zone created', data: result });
+    res.status(201).json({ success: true, message: 'Delivery zone created successfully', data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -31,7 +31,7 @@ const updateZone = async (req: Request, res: Response) => {
 const deleteZone = async (req: Request, res: Response) => {
   try {
     await DeliveryChargeService.deleteZone(req.params.id as string);
-    res.status(200).json({ success: true, message: 'Zone purged successfully' });
+    res.status(200).json({ success: true, message: 'Zone deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

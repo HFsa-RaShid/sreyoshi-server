@@ -53,8 +53,20 @@ const clearWishlistFromDB = async (userId: string) => {
   );
 };
 
+const removeSingleItemFromWishlistInDB = async (userId: string, productId: string) => {
+  return await Wishlist.findOneAndUpdate(
+    { userId },
+    { $pull: { products: { productId } } }, // 👈 $pull দিয়ে অ্যারে থেকে স্পেসিফিক অবজেক্ট রিমুভ করা হয়
+    { new: true }
+  ).populate({
+    path: 'products.productId',
+    populate: [{ path: 'categoryId' }, { path: 'brandId' }, { path: 'variants.weightId' }]
+  });
+};
+
 export const WishlistServices = {
   toggleWishlistInDB,
   getMyWishlistFromDB,
   clearWishlistFromDB,
+  removeSingleItemFromWishlistInDB,
 };

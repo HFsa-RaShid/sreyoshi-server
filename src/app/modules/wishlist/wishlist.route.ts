@@ -11,5 +11,6 @@ router.get('/:userId', WishlistControllers.getMyWishlist);
 
 // পুরো উইশলিস্ট এক ক্লিকে খালি করার জন্য
 router.delete('/clear/:userId', WishlistControllers.clearWishlist);
+router.patch('/remove-item', WishlistControllers.removeSingleItem);
 
 export const WishlistRoutes = router;

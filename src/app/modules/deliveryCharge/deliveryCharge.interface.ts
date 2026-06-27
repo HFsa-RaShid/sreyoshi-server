@@ -1,11 +1,11 @@
 import { Model } from 'mongoose';
 
-export type TDeliveryZone = 'inside' | 'outside' | 'specific-city';
+// 🎯 লজিক সহজ করে শুধুমাত্র inside এবং outside রাখা হলো
+export type TDeliveryZone = 'inside' | 'outside';
 
 export interface IDeliveryCharge {
-  zoneName: string; // e.g., "Inside Dhaka", "Barishal City", "Outside Entire Division"
+  zoneName: string;   // e.g., "Inside Dhaka", "Outside Dhaka"
   zoneType: TDeliveryZone;
-  cities: string[]; // ['barishal', 'dhaka'] (সব ছোট হাতের অক্ষরে সেভ হবে ম্যাচিং সহজ করার জন্য)
   charge: number;
   isActive: boolean;
 }

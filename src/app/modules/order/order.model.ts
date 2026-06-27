@@ -18,7 +18,8 @@ const orderSchema = new Schema<IOrder>(
       address: { type: String, required: true },
       city: { type: String, required: true },
     },
-    totalPrice: { type: Number, required: true },
+    deliveryCharge: { type: Number, required: true }, // 🎯 স্কিমা আপডেট
+    totalPrice: { type: Number, required: true },      // ফাইনাল টোটাল
     paymentMethod: {
       type: String,
       enum: ["COD", "SSLCommerz"],
@@ -35,7 +36,7 @@ const orderSchema = new Schema<IOrder>(
       default: "Pending",
     },
     transactionId: { type: String, required: true, unique: true },
-    additionalNotes: { type: String }, // 💡 স্কিমাতে নোট ফিল্ড ম্যাপ করা হলো
+    additionalNotes: { type: String },
   },
   { timestamps: true }
 );
