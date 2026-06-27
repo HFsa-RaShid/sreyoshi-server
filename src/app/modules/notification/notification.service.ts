@@ -62,6 +62,14 @@ const markAllAsReadInDB = async (userId: string) => {
   );
 };
 
+const markSingleAsReadInDB = async (id: string) => {
+  return await Notification.findByIdAndUpdate(
+    id,
+    { $set: { isRead: true } },
+    { new: true }
+  );
+};
+
 const deleteNotificationFromDB = async (id: string) => {
   return await Notification.findByIdAndDelete(id);
 };
@@ -69,6 +77,7 @@ const deleteNotificationFromDB = async (id: string) => {
 export const NotificationServices = {
   createNotificationInDB,
   getMyNotificationsFromDB,
+  markSingleAsReadInDB,
   markAllAsReadInDB,
   deleteNotificationFromDB,
 };

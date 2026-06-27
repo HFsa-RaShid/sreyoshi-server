@@ -53,6 +53,18 @@ const markAllAsRead = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
+const markSingleAsRead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await NotificationServices.markSingleAsReadInDB(req.params.id as string);
+    res.status(200).json({
+      success: true,
+      message: 'Notification marked as read',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const deleteNotification = async (req: Request, res: Response, next: NextFunction) => {
   try {
     await NotificationServices.deleteNotificationFromDB(req.params.id as string);
@@ -68,6 +80,7 @@ const deleteNotification = async (req: Request, res: Response, next: NextFunctio
 export const NotificationControllers = {
   createNotification,
   getMyNotifications,
+  markSingleAsRead,
   markAllAsRead,
   deleteNotification,
 };
